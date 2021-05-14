@@ -5,9 +5,9 @@ import (
 	"net"
 	"net/http"
 
-	ipfs "github.com/ipdr/ipdr/ipfs"
-	"github.com/ipdr/ipdr/server/registry"
 	log "github.com/sirupsen/logrus"
+	ipfs "github.com/srnbckr/ipdr/ipfs"
+	"github.com/srnbckr/ipdr/server/registry"
 )
 
 // Server is server structure

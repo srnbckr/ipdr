@@ -31,8 +31,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ipdr/ipdr/ipfs"
-	"github.com/ipdr/ipdr/regutil"
+	"github.com/srnbckr/ipdr/ipfs"
+	"github.com/srnbckr/ipdr/regutil"
 )
 
 var contentTypes = map[string]string{

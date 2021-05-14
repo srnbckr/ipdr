@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 
 	color "github.com/fatih/color"
-	registry "github.com/ipdr/ipdr/registry"
-	regutil "github.com/ipdr/ipdr/regutil"
-	"github.com/ipdr/ipdr/server"
 	log "github.com/sirupsen/logrus"
 	cobra "github.com/spf13/cobra"
+	registry "github.com/srnbckr/ipdr/registry"
+	regutil "github.com/srnbckr/ipdr/regutil"
+	"github.com/srnbckr/ipdr/server"
 )
 
 var green = color.New(color.FgGreen)

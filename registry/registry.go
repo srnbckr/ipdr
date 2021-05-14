@@ -18,11 +18,11 @@ import (
 	"strings"
 	"time"
 
-	docker "github.com/ipdr/ipdr/docker"
-	ipfs "github.com/ipdr/ipdr/ipfs"
-	netutil "github.com/ipdr/ipdr/netutil"
-	server "github.com/ipdr/ipdr/server"
 	log "github.com/sirupsen/logrus"
+	docker "github.com/srnbckr/ipdr/docker"
+	ipfs "github.com/srnbckr/ipdr/ipfs"
+	netutil "github.com/srnbckr/ipdr/netutil"
+	server "github.com/srnbckr/ipdr/server"
 )
 
 // Registry is the registry structure

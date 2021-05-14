@@ -27,7 +27,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ipdr/ipdr/netutil"
+	"github.com/srnbckr/ipdr/netutil"
 )
 
 // Returns whether this url should be handled by the blob handler
