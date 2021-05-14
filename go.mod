@@ -1,4 +1,4 @@
-module github.com/ipdr/ipdr
+module github.com/srnbckr/ipdr
 
 go 1.12
 
