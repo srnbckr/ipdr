@@ -32,6 +32,7 @@ func main() {
 
 	var ipfsHost string
 	var ipfsGateway string
+	var ipfsClusterApi string
 	var format string
 	var dockerRegistryHost string
 	var port uint
@@ -71,8 +72,10 @@ More info: https://github.com/ipdr/ipdr`,
 				DockerLocalRegistryHost: dockerRegistryHost,
 				IPFSHost:                ipfsHost,
 				IPFSGateway:             ipfsGateway,
+				IPFSClusterAPI:          ipfsClusterApi,
 				Debug:                   !silent,
 			})
+
 
 			imageID := args[0]
 
@@ -93,6 +96,7 @@ More info: https://github.com/ipdr/ipdr`,
 	pushCmd.Flags().BoolVarP(&silent, "silent", "s", false, "Silent flag suppresses logs and outputs only IPFS hash")
 	pushCmd.Flags().StringVarP(&ipfsHost, "ipfs-host", "", "127.0.0.1:5001", "A remote IPFS API host to push the image to. Eg. 127.0.0.1:5001")
 	pushCmd.Flags().StringVarP(&dockerRegistryHost, "docker-registry-host", "", "docker.local:5000", "The Docker local registry host. Eg. 127.0.0.1:5000 Eg. docker.local:5000")
+	pushCmd.Flags().StringVarP(&ipfsClusterApi, "ipfs-cluster", "", "127.0.0.1:9094", "A remote IPFS Cluster API host to pin the images. Eg. 127.0.0.1:9094")
 
 	pullCmd := &cobra.Command{
 		Use:   "pull",

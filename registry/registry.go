@@ -4,13 +4,17 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/ipfs-cluster/api"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -18,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	cluster "github.com/ipfs/ipfs-cluster/api/rest/client"
 	log "github.com/sirupsen/logrus"
 	docker "github.com/srnbckr/ipdr/docker"
 	ipfs "github.com/srnbckr/ipdr/ipfs"
@@ -30,6 +35,7 @@ type Registry struct {
 	dockerLocalRegistryHost string
 	dockerClient            *docker.Client
 	ipfsClient              *ipfs.Client
+	clusterClient           cluster.Client
 	debug                   bool
 }
 
@@ -38,6 +44,7 @@ type Config struct {
 	DockerLocalRegistryHost string
 	IPFSHost                string
 	IPFSGateway             string
+	IPFSClusterAPI          string
 	Debug                   bool
 }
 
@@ -68,10 +75,37 @@ func NewRegistry(config *Config) *Registry {
 		Debug: config.Debug,
 	})
 
+	ipfsAPIString := config.IPFSClusterAPI
+
+	if ipfsAPIString == "" {
+		return &Registry{
+			dockerLocalRegistryHost: dockerLocalRegistryHost,
+			ipfsClient:              ipfsClient,
+			dockerClient:            dockerClient,
+			clusterClient:           nil,
+			debug:                   config.Debug,
+		}
+	}
+	host, port, err := net.SplitHostPort(ipfsAPIString)
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] Failed to parse ipfs-cluster API String: ", err)
+	}
+	clusterClient, clusterError := cluster.NewDefaultClient(&cluster.Config{
+		Host:              host,
+		Port:              port,
+		LogLevel: "info",
+
+	})
+
+	if clusterError != nil {
+		log.Fatal("[cluster] %s", clusterError)
+	}
+
 	return &Registry{
 		dockerLocalRegistryHost: dockerLocalRegistryHost,
 		ipfsClient:              ipfsClient,
 		dockerClient:            dockerClient,
+		clusterClient:           clusterClient,
 		debug:                   config.Debug,
 	}
 }
@@ -138,8 +172,31 @@ func (r *Registry) PushImage(reader io.Reader, imageID string) (string, error) {
 
 	r.Debugf("\n[registry] uploaded to /ipfs/%s\n", imageIpfsHash)
 	r.Debugf("[registry] docker image %s\n", imageIpfsHash)
+	if r.clusterClient != nil {
+		r.Debugf("Attempting to pin image in ipfs-cluster: %s\n", imageIpfsHash )
+		r.PinImage(imageIpfsHash, imageID)
+	}
 
 	return imageIpfsHash, nil
+}
+
+// PinImage pins a docker image in ipfs-cluster
+func (r *Registry) PinImage(cidString string, name string) {
+	if r.clusterClient == nil {
+		log.Fatalf("[ipfs-cluster] --ipfs-cluster flag not set")
+		return
+	}
+	cid, err := cid.Decode(cidString)
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] ", err)
+		return
+	}
+	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] ", err)
+		return
+	}
+	log.Printf("[ipfs-cluster] Created Pin: ", pin.String())
 }
 
 // DownloadImage downloads the Docker image from IPFS
