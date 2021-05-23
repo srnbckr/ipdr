@@ -77,7 +77,9 @@ func NewRegistry(config *Config) *Registry {
 
 	ipfsAPIString := config.IPFSClusterAPI
 
+
 	if ipfsAPIString == "" {
+		log.Printf("IPFS API String: ", ipfsAPIString)
 		return &Registry{
 			dockerLocalRegistryHost: dockerLocalRegistryHost,
 			ipfsClient:              ipfsClient,
@@ -173,7 +175,7 @@ func (r *Registry) PushImage(reader io.Reader, imageID string) (string, error) {
 	r.Debugf("\n[registry] uploaded to /ipfs/%s\n", imageIpfsHash)
 	r.Debugf("[registry] docker image %s\n", imageIpfsHash)
 	if r.clusterClient != nil {
-		r.Debugf("Attempting to pin image in ipfs-cluster: %s\n", imageIpfsHash )
+		r.Debugf("[ipfs-cluster] attempting to pin image in ipfs-cluster: %s\n", imageIpfsHash )
 		r.PinImage(imageIpfsHash, imageID)
 	}
 
@@ -188,15 +190,15 @@ func (r *Registry) PinImage(cidString string, name string) {
 	}
 	cid, err := cid.Decode(cidString)
 	if err != nil {
-		log.Fatalf("[ipfs-cluster] ", err)
+		log.Fatalf("[ipfs-cluster] %s", err)
 		return
 	}
 	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
 	if err != nil {
-		log.Fatalf("[ipfs-cluster] ", err)
+		log.Fatalf("[ipfs-cluster] %s", err)
 		return
 	}
-	log.Printf("[ipfs-cluster] Created Pin: ", pin.String())
+	log.Printf("[ipfs-cluster] Created Pin: %s", pin.String())
 }
 
 // DownloadImage downloads the Docker image from IPFS
