@@ -24,13 +24,18 @@
 package registry
 
 import (
+	"context"
 	"fmt"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/ipfs-cluster/api"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	cluster "github.com/ipfs/ipfs-cluster/api/rest/client"
 	"github.com/srnbckr/ipdr/ipfs"
 	"github.com/srnbckr/ipdr/regutil"
 )
@@ -42,10 +47,11 @@ var contentTypes = map[string]string{
 
 // Config is the config for the registry
 type Config struct {
-	IPFSHost     string
-	IPFSGateway  string
-	CIDResolvers []string
-	CIDStorePath string
+	IPFSHost       string
+	IPFSGateway    string
+	IPFSClusterAPI string
+	CIDResolvers   []string
+	CIDStorePath   string
 }
 
 type registry struct {
@@ -55,8 +61,9 @@ type registry struct {
 
 	cids *cidStore
 
-	config     *Config
-	ipfsClient *ipfs.Client
+	config        *Config
+	ipfsClient    *ipfs.Client
+	clusterClient cluster.Client
 
 	resolver CIDResolver
 }
@@ -174,9 +181,27 @@ func (r *registry) resolveCID(repo, reference string) (string, error) {
 	}
 	return "", fmt.Errorf("cannot resolve CID: %s:%s", repo, reference)
 }
+func (r *registry) pinImage(cidString string, name string) {
+	if r.clusterClient == nil {
+		log.Fatalf("[ipfs-cluster] --ipfs-cluster flag not set")
+		return
+	}
+	cid, err := cid.Decode(cidString)
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] %s", err)
+		return
+	}
+	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] %s", err)
+		return
+	}
+	r.log.Printf("[ipfs-cluster] Created Pin: %s", pin.String())
+}
 
 func (r *registry) resolve(repo, reference string) []string {
 	r.log.Printf("resolving CID: %s:%s", repo, reference)
+	r.pinImage(repo, "")
 
 	// local/cached
 	if cid, ok := r.cids.Get(repo, reference); ok {
@@ -192,6 +217,7 @@ func (r *registry) resolve(repo, reference string) []string {
 		}
 	}
 
+
 	// lookup
 	return r.resolver.Resolve(repo, reference)
 }
@@ -203,6 +229,35 @@ func New(config *Config, opts ...Option) http.Handler {
 		Host:       config.IPFSHost,
 		GatewayURL: config.IPFSGateway,
 	})
+
+	ipfsAPIString := config.IPFSClusterAPI
+
+	// TODO: better error handling when cluster api url is not available
+	//if ipfsAPIString != "" {
+	//	log.Printf("IPFS API String: ", ipfsAPIString)
+	//	return &Registry{
+	//		dockerLocalRegistryHost: dockerLocalRegistryHost,
+	//		ipfsClient:              ipfsClient,
+	//		dockerClient:            dockerClient,
+	//		clusterClient:           nil,
+	//		debug:                   config.Debug,
+	//	}
+	//}
+	host, port, err := net.SplitHostPort(ipfsAPIString)
+	if err != nil {
+		log.Fatalf("[ipfs-cluster] Failed to parse ipfs-cluster API String: ", err)
+	}
+	clusterClient, clusterError := cluster.NewDefaultClient(&cluster.Config{
+		Host:              host,
+		Port:              port,
+		LogLevel: "info",
+
+	})
+
+	if clusterError != nil {
+		log.Fatal("[cluster] %s", clusterError)
+	}
+
 	r := &registry{
 		log: log.New(os.Stderr, "", log.LstdFlags),
 		blobs: blobs{
@@ -215,6 +270,7 @@ func New(config *Config, opts ...Option) http.Handler {
 		},
 		cids:       newCIDStore(config.CIDStorePath),
 		ipfsClient: ipfsClient,
+		clusterClient: clusterClient,
 		config:     config,
 	}
 	// TODO refactor so we donot have to do this?

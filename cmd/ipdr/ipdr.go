@@ -96,7 +96,7 @@ More info: https://github.com/ipdr/ipdr`,
 	pushCmd.Flags().BoolVarP(&silent, "silent", "s", false, "Silent flag suppresses logs and outputs only IPFS hash")
 	pushCmd.Flags().StringVarP(&ipfsHost, "ipfs-host", "", "127.0.0.1:5001", "A remote IPFS API host to push the image to. Eg. 127.0.0.1:5001")
 	pushCmd.Flags().StringVarP(&dockerRegistryHost, "docker-registry-host", "", "docker.local:5000", "The Docker local registry host. Eg. 127.0.0.1:5000 Eg. docker.local:5000")
-	pushCmd.Flags().StringVarP(&ipfsClusterApi, "ipfs-cluster", "", "127.0.0.1:9094", "A remote IPFS Cluster API host to pin the images. Eg. 127.0.0.1:9094")
+	pushCmd.Flags().StringVarP(&ipfsClusterApi, "ipfs-cluster", "", "", "A remote IPFS Cluster API host to pin the images. Eg. 127.0.0.1:9094")
 
 	pullCmd := &cobra.Command{
 		Use:   "pull",
@@ -154,6 +154,7 @@ More info: https://github.com/ipdr/ipdr`,
 				Debug:        !silent,
 				IPFSHost:     ipfsHost,
 				IPFSGateway:  ipfsGateway,
+				IPFSClusterApi: ipfsClusterApi,
 				CIDResolvers: cidResolvers,
 				CIDStorePath: cidStorePath,
 				TLSKeyPath:   tlsKeyPath,
@@ -177,6 +178,7 @@ More info: https://github.com/ipdr/ipdr`,
 	serverCmd.Flags().StringVarP(&ipfsGateway, "ipfs-gateway", "g", "127.0.0.1:8080", "The readonly IPFS Gateway URL to pull the image from. Eg. https://ipfs.io")
 	serverCmd.Flags().StringArrayVar(&cidResolvers, "cid-resolver", []string{"file:" + defaultCIDStore}, "Map repo:reference to CID. Accepts dnslink, IPFS path, and local file path.")
 	serverCmd.Flags().StringVar(&cidStorePath, "cid-store", defaultCIDStore, "CID local store location")
+	serverCmd.Flags().StringVarP(&ipfsClusterApi, "ipfs-cluster", "", "", "A remote IPFS Cluster API host to pin the images. Eg. 127.0.0.1:9094")
 
 	convertCmd := &cobra.Command{
 		Use:   "convert",

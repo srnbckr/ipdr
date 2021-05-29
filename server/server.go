@@ -17,6 +17,7 @@ type Server struct {
 	host         string
 	ipfsHost     string
 	ipfsGateway  string
+	ipfsCluster  string
 	cidResolvers []string
 	cidStorePath string
 	tlsCertPath  string
@@ -25,14 +26,15 @@ type Server struct {
 
 // Config is server config
 type Config struct {
-	Debug        bool
-	Port         uint
-	IPFSHost     string
-	IPFSGateway  string
-	CIDResolvers []string
-	CIDStorePath string
-	TLSCertPath  string
-	TLSKeyPath   string
+	Debug          bool
+	Port           uint
+	IPFSHost       string
+	IPFSGateway    string
+	CIDResolvers   []string
+	CIDStorePath   string
+	TLSCertPath    string
+	TLSKeyPath     string
+	IPFSClusterApi string
 }
 
 // InfoResponse is response for manifest info response
@@ -44,7 +46,7 @@ type InfoResponse struct {
 	Problematic []string `json:"problematic"`
 }
 
-var projectURL = "https://github.com/ipdr/ipdr"
+var projectURL = "https://github.com/srnbckr/ipdr"
 
 // NewServer returns a new server instance
 func NewServer(config *Config) *Server {
@@ -62,6 +64,7 @@ func NewServer(config *Config) *Server {
 		debug:        config.Debug,
 		ipfsHost:     config.IPFSHost,
 		ipfsGateway:  ipfs.NormalizeGatewayURL(config.IPFSGateway),
+		ipfsCluster:  config.IPFSClusterApi,
 		cidResolvers: config.CIDResolvers,
 		cidStorePath: config.CIDStorePath,
 		tlsCertPath:  config.TLSCertPath,
@@ -83,6 +86,7 @@ func (s *Server) Start() error {
 	http.Handle("/", registry.New(&registry.Config{
 		IPFSHost:     s.ipfsHost,
 		IPFSGateway:  s.ipfsGateway,
+		IPFSClusterAPI: s.ipfsCluster,
 		CIDResolvers: s.cidResolvers,
 		CIDStorePath: s.cidStorePath,
 	}))
