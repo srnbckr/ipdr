@@ -75,7 +75,6 @@ func (r *registry) v2(resp http.ResponseWriter, req *http.Request) *regError {
 		return r.blobs.handle(resp, req)
 	}
 	if isManifest(req) {
-		r.log.Printf("This is a docker manifest - pin it")
 		return r.manifests.handle(resp, req, r)
 	}
 	resp.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
@@ -188,11 +187,20 @@ func (r *registry) pinImage(cidString string, name string) {
 		log.Fatalf("[ipfs-cluster] --ipfs-cluster flag not set")
 		return
 	}
+
 	cid, err := cid.Decode(cidString)
 	if err != nil {
 		log.Fatalf("[ipfs-cluster] %s", err)
 		return
 	}
+	// check if already pinned
+	allocation, err := r.clusterClient.Allocation(context.Background(), cid)
+	if allocation != nil {
+		r.log.Print("Pin %s already exists. Not pinning.", cidString)
+		return
+	}
+
+
 	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
 	if err != nil {
 		log.Fatalf("[ipfs-cluster] %s", err)
