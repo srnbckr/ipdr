@@ -75,7 +75,8 @@ func (r *registry) v2(resp http.ResponseWriter, req *http.Request) *regError {
 		return r.blobs.handle(resp, req)
 	}
 	if isManifest(req) {
-		return r.manifests.handle(resp, req)
+		r.log.Printf("This is a docker manifest - pin it")
+		return r.manifests.handle(resp, req, r)
 	}
 	resp.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 	if req.URL.Path != "/v2/" && req.URL.Path != "/v2" {
@@ -181,6 +182,7 @@ func (r *registry) resolveCID(repo, reference string) (string, error) {
 	}
 	return "", fmt.Errorf("cannot resolve CID: %s:%s", repo, reference)
 }
+
 func (r *registry) pinImage(cidString string, name string) {
 	if r.clusterClient == nil {
 		log.Fatalf("[ipfs-cluster] --ipfs-cluster flag not set")
@@ -201,7 +203,7 @@ func (r *registry) pinImage(cidString string, name string) {
 
 func (r *registry) resolve(repo, reference string) []string {
 	r.log.Printf("resolving CID: %s:%s", repo, reference)
-	r.pinImage(repo, "")
+	//r.pinImage(repo, "")
 
 	// local/cached
 	if cid, ok := r.cids.Get(repo, reference); ok {

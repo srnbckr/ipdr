@@ -54,7 +54,7 @@ func isManifest(req *http.Request) bool {
 
 // https://github.com/opencontainers/distribution-spec/blob/master/spec.md#pulling-an-image-manifest
 // https://github.com/opencontainers/distribution-spec/blob/master/spec.md#pushing-an-image
-func (m *manifests) handle(resp http.ResponseWriter, req *http.Request) *regError {
+func (m *manifests) handle(resp http.ResponseWriter, req *http.Request, reg *registry) *regError {
 	elem := strings.Split(req.URL.Path, "/")
 	elem = elem[1:]
 	target := elem[len(elem)-1]
@@ -93,6 +93,8 @@ func (m *manifests) handle(resp http.ResponseWriter, req *http.Request) *regErro
 		resp.Header().Set("Content-Type", mf.contentType)
 		resp.Header().Set("Content-Length", fmt.Sprint(len(mf.blob)))
 		resp.WriteHeader(http.StatusOK)
+		reg.log.Printf("Pin manifest: %s", repo)
+		reg.pinImage(repo, "")
 		io.Copy(resp, bytes.NewReader(mf.blob))
 		return nil
 	}
