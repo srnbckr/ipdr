@@ -194,9 +194,15 @@ func (r *registry) pinImage(cidString string, name string) {
 		return
 	}
 	// check if already pinned
-	allocation, err := r.clusterClient.Allocation(context.Background(), cid)
-	if allocation != nil {
-		r.log.Print("Pin %s already exists. Not pinning.", cidString)
+	pinInfo, err := r.clusterClient.Status(context.Background(), cid, true)
+	for key, elem := range pinInfo.PeerMap {
+		if !elem.Status.Match(api.TrackerStatusUnpinned) {
+			r.log.Printf("CID %s already pinned by Peer %s", cidString, key)
+			return
+		}
+	}
+	if err == nil {
+		r.log.Printf("Pin %s already exists. Not pinning.", cidString)
 		return
 	}
 
