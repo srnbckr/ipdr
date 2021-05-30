@@ -201,11 +201,6 @@ func (r *registry) pinImage(cidString string, name string) {
 			return
 		}
 	}
-	if err == nil {
-		r.log.Printf("Pin %s already exists. Not pinning.", cidString)
-		return
-	}
-
 
 	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
 	if err != nil {
