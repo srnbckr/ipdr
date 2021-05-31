@@ -34,6 +34,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	cluster "github.com/ipfs/ipfs-cluster/api/rest/client"
 	"github.com/srnbckr/ipdr/ipfs"
@@ -202,12 +203,17 @@ func (r *registry) pinImage(cidString string, name string) {
 		}
 	}
 
-	pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
-	if err != nil {
-		log.Fatalf("[ipfs-cluster] %s", err)
-		return
-	}
-	r.log.Printf("[ipfs-cluster] Created Pin: %s", pin.String())
+	// Start pinning after 60 seconds
+	// TODO: find a better way, i.e. check local k8s nodes for images
+	pinTimer := time.AfterFunc(time.Second * 60, func() {
+		pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
+		if err != nil {
+			log.Fatalf("[ipfs-cluster] %s", err)
+			return
+		}
+		r.log.Printf("[ipfs-cluster] Created Pin: %s", pin.String())
+	})
+	defer pinTimer.Stop()
 }
 
 func (r *registry) resolve(repo, reference string) []string {
