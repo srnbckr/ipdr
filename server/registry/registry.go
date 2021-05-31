@@ -203,9 +203,9 @@ func (r *registry) pinImage(cidString string, name string) {
 		}
 	}
 
-	// Start pinning after 60 seconds
+	// Start pinning after 90 seconds
 	// TODO: find a better way, i.e. check local k8s nodes for images
-	time.AfterFunc(time.Second * 60, func() {
+	time.AfterFunc(time.Second * 90, func() {
 		r.log.Printf("[ipfs-cluster] Creating pin for %s", cidString)
 		pin, err := r.clusterClient.Pin(context.Background(), cid, api.PinOptions{Name: name})
 		if err != nil {
